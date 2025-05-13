@@ -8,7 +8,7 @@
   style.textContent = `
     @media print {
       .Cw81bf, .B6413b, .Chcfq, .Cpk34y {
-        display: revert;
+        display: revert !important;
       }
     }
   `;
