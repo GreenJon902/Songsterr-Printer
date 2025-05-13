@@ -6,8 +6,9 @@ Inspired by https://github.com/AnsonLai/MuseScore-Printer.
 ## Usage
 
 1. Open a Songsterr song (i.e. https://www.songsterr.com/a/wsa/ice-nine-kills-funeral-derangements-drum-tab-s499336).
-2. Open Inspect Element (Ctrl+Shift+I on Chrome).
-3. Copy and paste the following line of code into the console (second tab on Chrome) (see ./originalCode.js for the actual code)
+2. Scroll to the bottom of the page (so that all the content has loaded).
+3. Open Inspect Element (Ctrl+Shift+I on Chrome).
+4. Copy and paste the following line of code into the console (second tab on Chrome) (see ./originalCode.js for the actual code)
 ```js
 eval(await (await fetch("https://raw.githubusercontent.com/GreenJon902/Songsterr-Printer/refs/heads/main/originalCode.js")).text())
 ```
