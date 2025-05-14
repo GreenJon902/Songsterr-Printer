@@ -1,4 +1,3 @@
-//self invoked function (so it doesn't pollute the global scope)
 (async function () {
    // Remove the "Please use the website's Print button to print this page." message.
    document.getElementById("app").classList.remove("By1np"); 
@@ -16,7 +15,6 @@
    
    // Ensure all lines are loaded by scrolling to them
    const lines = document.getElementById("tablature").children
-   undefined
    for (i=0;i<lines.length;i++) {
       lines[i].scrollIntoView();
       await new Promise(r => setTimeout(r, 100));  // Wait a bit so it actually loads
