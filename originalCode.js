@@ -14,7 +14,7 @@
    document.head.appendChild(style);
    
    // Ensure all lines are loaded by scrolling to them
-   const lines = document.getElementById("tablature").children
+   const lines = document.getElementById("tablature").children;
    for (i=0;i<lines.length;i++) {
       lines[i].scrollIntoView();
       await new Promise(r => setTimeout(r, 100));  // Wait a bit so it actually loads
