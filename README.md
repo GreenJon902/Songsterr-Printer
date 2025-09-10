@@ -8,7 +8,7 @@ Inspired by https://github.com/AnsonLai/MuseScore-Printer.
 1. Open a Songsterr song (i.e. https://www.songsterr.com/a/wsa/ice-nine-kills-funeral-derangements-drum-tab-s499336).
 2. Open Inspect Element (Ctrl+Shift+I on Chrome).
 3. Choose the size you want to print by resizing Inspect Element pane (Hover your mouse over the line immediately to the right of the scroll bar in the middle of the screen. Your mouse should change to two horizontal arrows, click and drag horizontally do resize).
-4. Copy and paste the following line of code into the console (second tab on Chrome) (see ./originalCode.js for the actual code)
+4. Copy and paste the following line of code into the console (second tab on Chrome) (see ./single.js for the actual code)
 ```js
 eval(await (await fetch("https://raw.githubusercontent.com/GreenJon902/Songsterr-Printer/refs/heads/main/originalCode.js")).text())
 ```
