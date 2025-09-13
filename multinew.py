@@ -37,6 +37,20 @@ def underlined(string: str) -> str:
             i += 1
     return ret
 
+class PreProcess:
+    """
+    This takes a function, which it runs in a thread. When you want to get the result, it will join the thread before returning the value.
+    """
+    def __init__(self, func):
+        def wrapper():
+            self.result = func()  ## DO this so we can store the result
+        self.t = threading.Thread(target=wrapper)
+        self.t.start()
+
+    def get(self):
+        self.t.join()
+        return self.result  # Will have been created by the end of the wrapper run
+
 def get_search_results(search_query: str) -> list[str]:
     """
     Returns the first 10 results for the given search_query.
@@ -58,32 +72,40 @@ def find_songsterr_links(tracks: list[tuple[str, list[str]]], instrument: str) -
     
     This returns tracks in the order that they were given. Skipped items are None in the return list.
     """
-    found = list()
+    
+    # Create preprocess objects so less waiting time for user
+    preprocess_objects = []
     for track, artists in tracks:
-        for artist in artists:
+        artist = artists[0]  # Just take first artist
+        # Get top results from google
+        search_query = "site:songsterr.com " + artist + " " + track + " " + instrument + " tab"
+        preprocess_objects.append((search_query, PreProcess(lambda se=search_query: get_search_results(se))))
+    
+    # Handle preprocess_objects
+    found = list()
+    for (search_query, preprocess_object), (track, artists) in zip(preprocess_objects, tracks):
+        artist = artists[0]  # Just take first artist
             
-            # Get top results from google
-            search_query = "site:songsterr.com " + artist + " " + track + " " + instrument + " tab"
-            response = get_search_results(search_query)
-            if len(response) == 0:
-                print("No results for \"" + search_query + "\"")
-            
-            # Let the user select the correct result
-            for result in response:
-                action = input(underlined("Found (for " + search_query + "): " + result + ". [__A__ccept/__N__ext/__M__ove on]? ")).upper()
-                if action == "A":
-                    break
-                elif action == "N":
-                    continue
-                elif action == "M":
-                    action = None
-                    break
-                else:
-                    error
-            if action is not None:  # If not None then result is the songsterr link
-                found.append((artist, track, result))
+        response = preprocess_object.get()
+        if len(response) == 0:
+            print("No results for \"" + search_query + "\"")
+        
+        # Let the user select the correct result
+        for result in response:
+            action = input(underlined("Found (for " + search_query + "): " + result + ". [__A__ccept/__N__ext/__M__ove on]? ")).upper()
+            if action == "A":
+                break
+            elif action == "N":
+                continue
+            elif action == "M":
+                action = None
+                break
             else:
-                found.append(None)
+                error
+        if action is not None:  # If not None then result is the songsterr link
+            found.append((artist, track, result))
+        else:
+            found.append(None)
     return found
 
 
@@ -115,6 +137,7 @@ def find_songs_in_album() -> list[tuple[str, list[str]]]:
             "client_secret": input("Secret: ")
         })
         token = r["access_token"]
+        print ("Token: " + token)
     
     # Get album data
     r = request("GET", f"https://api.spotify.com/v1/albums/{input('Album ID: ')}", headers={
