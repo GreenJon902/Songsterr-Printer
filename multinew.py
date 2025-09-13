@@ -132,40 +132,35 @@ def download_songsterr(args):
     url, path = args
     print(f"Downloading {url}...")
 
+    # Setup chromedriver
     chrome_options = Options()
-    #``chrome_options.binary_location = "./chrome-linux64/chrome"
     chrome_options.add_argument('--no-sandbox')
     #chrome_options.add_argument('--disable-dev-shm-usage')  # sometimes helps too
     chrome_options.add_argument('--headless=new')
     chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0")
-    chrome_options.add_argument("--window-size=1100,1080")
+    chrome_options.add_argument("--window-size=1200,1080")  ## Adjust X size to change PDF scaling
 
     temp_dir = tempfile.mkdtemp()
     chrome_options.add_argument(f"--user-data-dir={temp_dir}")
 
 
     driver = webdriver.Chrome(
-        #service=Service("./chromedriver-linux64/chromedriver", log_path="./chromedriver.log"),
-        options=chrome_options,
+        options=chrome_options
     )
     driver.get(url)
     WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.ID, "tablature"))
     )
 
+    # Run the script 
     script = open("single.js", "r").read()
-    print(1)
-    driver.execute_script(script)
-    print(2)
+    driver.execute_script("let ranByMulti = true; await " + script)
+    
+    # Get PDF data
     result = driver.execute_cdp_cmd("Page.printToPDF", {
         "printBackground": True,
         # You can add options like landscape, paperWidth, paperHeight, etc.
     })
-
-    logs = driver.get_log('browser')
-    for entry in logs:
-        print(entry)
-
     pdf_data = base64.b64decode(result['data'])
 
     # Save PDF to file
@@ -184,13 +179,8 @@ def download_multiple_songsterr(tracks: list[tuple[str, str]]):
     """
     with ThreadPoolExecutor(max_workers=10) as executor:
         results = executor.map(download_songsterr, tracks)
-        for result in results:
-            print(result)
 
 if __name__ == "__main__":
-    download_multiple_songsterr([("https://www.songsterr.com/a/wsa/plot-in-you-divide-drum-tab-s583489", "out.pdf")])
-    
-else:
     songs, album_name = find_songs_in_album()
     instrument = input("Instrument: ")
     links = filter(lambda x: x[1] is not None, enumerate(find_songsterr_links(songs, instrument)))
