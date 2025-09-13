@@ -17,5 +17,6 @@ eval(await (await fetch("https://raw.githubusercontent.com/GreenJon902/Songsterr
 Please note that you can print as PDF if you want to just download and save your music. There are options in the print dialog to remove the unsightly URL and date headers/footers as well.
 
 ## Download multiple
-If you want to download multiple at once (e.g. a whole albulm) then get yourself a spotify developer token, and a copy of chrome driver and figure it out with multi.py.
-It might be broken atm, I can't get the google searching to work... dunno.
+If you want to download a whole album, then you'll want a spotify developer token/credentials (google it, it's not hard to). Also you'll need the spotify album id.
+That should be about it, just run the multi.py file.
+Oh you'll need to install the pip dependencies (at the top of the python file) too.
