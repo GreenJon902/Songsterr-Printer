@@ -1,4 +1,6 @@
 (async function () {
+    // If global flag ranByMulti is set then print dialogue won't be opened
+
    // Remove the "Please use the website's Print button to print this page." message.
    document.getElementById("app").classList.remove("By1np"); 
    
@@ -21,5 +23,5 @@
    } 
    
    // Bring up the print dialogue
-   print();  
+   if (typeof ranByMulti === "undefined") print();  
 })();
