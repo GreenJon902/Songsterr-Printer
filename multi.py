@@ -9,6 +9,7 @@ import requests
 import json
 import base64
 import os
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -88,24 +89,37 @@ def find_songsterr_links(tracks: list[tuple[str, list[str]]], instrument: str) -
             
         response = preprocess_object.get()
         if len(response) == 0:
-            print("No results for \"" + search_query + "\"")
+            print("No results from engine for \"" + search_query + "\"")
         
-        # Let the user select the correct result
-        for result in response:
-            action = input(underlined("Found (for " + search_query + "): " + result + ". [__A__ccept/__N__ext/__M__ove on]? ")).upper()
-            if action == "A":
-                break
-            elif action == "N":
+        # Automatically figure out if any of these results are any use
+        good_results = []
+        for url in response:
+            if "songsterr.com" not in url:
                 continue
-            elif action == "M":
-                action = None
-                break
-            else:
-                error
-        if action is not None:  # If not None then result is the songsterr link
-            found.append((artist, track, result))
-        else:
+            if instrument not in url:
+                continue
+            if track.lower().replace(" ", "-") not in url:
+                continue
+            if artist.lower().replace(" ", "-") not in url:
+                continue
+            good_results.append(url)
+        
+        # Let user decide which result, or supply their own
+        print("For " + search_query + " found:")
+        for n, res in enumerate(good_results):
+            print(n, res)
+        if len(good_results) == 0:
+            print("No good results found!")
+        action = input("What to do [Enter - skip this track, Number - select url, Url - supply your own songsterr url]? ").strip()
+        
+        # Handle action
+        if action == "":  # Empty
             found.append(None)
+        elif len(set(action).difference(set("0123456789"))) == 0:  # An int
+            found.append((artist, track, good_results[int(action)]))
+        else:  # A url
+            found.append((artist, track, action))
+            
     return found
 
 
@@ -152,48 +166,52 @@ def download_songsterr(args):
     Runs the https://raw.githubusercontent.com/GreenJon902/Songsterr-Printer/refs/heads/main/single.js and saves to the given path
     args: (url, path)
     """
-    url, path = args
-    print(f"Downloading {url}...")
+    try:
+        url, path = args
+        print(f"Downloading {url}...")
 
-    # Setup chromedriver
-    chrome_options = Options()
-    chrome_options.add_argument('--no-sandbox')
-    #chrome_options.add_argument('--disable-dev-shm-usage')  # sometimes helps too
-    chrome_options.add_argument('--headless=new')
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0")
-    chrome_options.add_argument("--window-size=1200,1080")  ## Adjust X size to change PDF scaling
+        # Setup chromedriver
+        chrome_options = Options()
+        chrome_options.add_argument('--no-sandbox')
+        #chrome_options.add_argument('--disable-dev-shm-usage')  # sometimes helps too
+        chrome_options.add_argument('--headless=new')
+        chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0")
+        chrome_options.add_argument("--window-size=1200,1080")  ## Adjust X size to change PDF scaling
 
-    temp_dir = tempfile.mkdtemp()
-    chrome_options.add_argument(f"--user-data-dir={temp_dir}")
+        temp_dir = tempfile.mkdtemp()
+        chrome_options.add_argument(f"--user-data-dir={temp_dir}")
 
 
-    driver = webdriver.Chrome(
-        options=chrome_options
-    )
-    driver.get(url)
-    WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.ID, "tablature"))
-    )
+        driver = webdriver.Chrome(
+            options=chrome_options
+        )
+        driver.get(url)
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.ID, "tablature"))
+        )
 
-    # Run the script 
-    script = open("single.js", "r").read()
-    driver.execute_script("let ranByMulti = true; await " + script)
-    
-    # Get PDF data
-    result = driver.execute_cdp_cmd("Page.printToPDF", {
-        "printBackground": True,
-        # You can add options like landscape, paperWidth, paperHeight, etc.
-    })
-    pdf_data = base64.b64decode(result['data'])
+        # Run the script 
+        script = open("single.js", "r").read()
+        driver.execute_script("let ranByMulti = true; await " + script)
+        
+        # Get PDF data
+        result = driver.execute_cdp_cmd("Page.printToPDF", {
+            "printBackground": True,
+            # You can add options like landscape, paperWidth, paperHeight, etc.
+        })
+        pdf_data = base64.b64decode(result['data'])
 
-    # Save PDF to file
-    with lock:
-        if not os.path.exists("out"):
-            os.mkdir("out")
-    with open(path, "wb") as f:
-        f.write(pdf_data)
+        # Save PDF to file
+        with lock:
+            if not os.path.exists("out"):
+                os.mkdir("out")
+        with open(path, "wb") as f:
+            f.write(pdf_data)
 
-    print("PDF saved as " + path)
+        print("PDF saved as " + path)
+    except e:
+        print(traceback.format_exc())  # So still outputs if in thread
+        raise e  # Throw so we know it failed
 
 def download_multiple_songsterr(tracks: list[tuple[str, str]]):
     """
