@@ -2,7 +2,7 @@
     // If global flag ranByMulti is set then print dialogue won't be opened
 
    // Remove the "Please use the website's Print button to print this page." message.
-   document.getElementById("app").classList.remove("Bts1qd"); 
+   document.getElementById("app").classList.remove("tGl1ea_appNoPrint"); 
    
    // Disable the @media print {display: none;} on the tab elements.
    const style = document.createElement("style");
